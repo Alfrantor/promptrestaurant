@@ -1,0 +1,743 @@
+from django.db import models
+
+
+
+class ApiKeys(models.Model):
+    clave = models.CharField(unique=True, max_length=64)
+    nombre = models.CharField(max_length=100)
+    permisos = models.JSONField(blank=True, null=True)
+    fecha_expiracion = models.DateTimeField(blank=True, null=True)
+    activa = models.IntegerField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'api_keys'
+
+class Areas(models.Model):
+    sucursal = models.ForeignKey('Sucursales', models.DO_NOTHING)
+    nombre = models.CharField(max_length=50)
+    descripcion = models.TextField(blank=True, null=True)
+    capacidad = models.IntegerField(blank=True, null=True)
+    estatus = models.CharField(max_length=13, blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'areas'
+
+class BloquesRuta(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, null=True)
+    color = models.CharField(max_length=20, blank=True, null=True)
+    fecha_creacion = models.DateTimeField(blank=True, null=True)
+    fecha_modificacion = models.DateTimeField(blank=True, null=True)
+    hora_estimada_entrega = models.TimeField(blank=True, null=True)
+    activo = models.IntegerField(blank=True, null=True)
+    creador = models.ForeignKey('Empleados', models.DO_NOTHING, blank=True, null=True)
+    repartidor_id = models.IntegerField(blank=True, null=True)
+    modificador_id = models.IntegerField(blank=True, null=True)
+    fecha_salida = models.DateTimeField(blank=True, null=True)
+    fecha_regreso = models.DateTimeField(blank=True, null=True)
+    prioritario = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'bloques_ruta'
+
+class Cajas(models.Model):
+    sucursal = models.ForeignKey('Sucursales', models.DO_NOTHING)
+    nombre = models.CharField(max_length=50)
+    ubicacion = models.CharField(max_length=100, blank=True, null=True)
+    estatus = models.CharField(max_length=13, blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'cajas'
+
+class CategoriasProductos(models.Model):
+    nombre = models.CharField(max_length=50)
+    descripcion = models.TextField(blank=True, null=True)
+    imagen_url = models.CharField(max_length=255, blank=True, null=True)
+    color = models.CharField(max_length=20, blank=True, null=True)
+    orden = models.IntegerField(blank=True, null=True)
+    categoria_padre = models.ForeignKey('self', models.DO_NOTHING, blank=True, null=True)
+    visible_menu = models.IntegerField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'categorias_productos'
+
+    def __str__(self):
+        return self.nombre
+
+class Clientes(models.Model):
+    nombre = models.CharField(max_length=100)
+    apellidos = models.CharField(max_length=100, blank=True, null=True)
+    telefono = models.CharField(max_length=20)
+    email = models.CharField(max_length=100, blank=True, null=True)
+    fecha_nacimiento = models.DateField(blank=True, null=True)
+    puntos_acumulados = models.IntegerField(blank=True, null=True)
+    nivel_lealtad = models.CharField(max_length=7, blank=True, null=True)
+    ultima_visita = models.DateTimeField(blank=True, null=True)
+    notas = models.TextField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+    costo_entrega = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True)
+    cubiertos = models.IntegerField(blank=True, null=True)
+      # 🔑 Relación con MetodosPago
+    forma_pago_predeterminada = models.ForeignKey(
+        'MetodosPago',
+        on_delete=models.SET_NULL,   # si se borra el método, queda NULL
+        blank=True,
+        null=True,
+        related_name="clientes"      # para acceder desde MetodosPago → clientes.all()
+    )
+
+    class Meta:
+        managed = True
+        db_table = 'clientes'
+
+class ComboProductos(models.Model):
+    combo = models.ForeignKey('Combos', models.DO_NOTHING)
+    producto = models.ForeignKey('Productos', models.DO_NOTHING)
+    cantidad = models.IntegerField()
+    creado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'combo_productos'
+
+class Combos(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, null=True)
+    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    fecha_inicio = models.DateTimeField(blank=True, null=True)
+    fecha_fin = models.DateTimeField(blank=True, null=True)
+    imagen_url = models.CharField(max_length=255, blank=True, null=True)
+    dias_semana = models.CharField(max_length=20, blank=True, null=True)
+    hora_inicio = models.TimeField(blank=True, null=True)
+    hora_fin = models.TimeField(blank=True, null=True)
+    limite_ventas = models.IntegerField(blank=True, null=True)
+    estatus = models.CharField(max_length=8, blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'combos'
+
+class Configuracion(models.Model):
+    clave = models.CharField(unique=True, max_length=100)
+    valor = models.TextField(blank=True, null=True)
+    tipo = models.CharField(max_length=8, blank=True, null=True)
+    descripcion = models.TextField(blank=True, null=True)
+    modificable = models.IntegerField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'configuracion'
+
+class ConfiguracionOrdenCocina(models.Model):
+    nombre_config = models.CharField(max_length=50)
+    config_tipo_servicio = models.JSONField()
+    activo = models.IntegerField(blank=True, null=True)
+    created_at = models.DateTimeField(blank=True, null=True)
+    updated_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'configuracion_orden_cocina'
+
+class ConfiguracionPlano(models.Model):
+    area = models.OneToOneField(Areas, models.DO_NOTHING)
+    tamano_cuadricula = models.IntegerField(blank=True, null=True)
+    mostrar_cuadricula = models.IntegerField(blank=True, null=True)
+    ajustar_a_cuadricula = models.IntegerField(blank=True, null=True)
+    color_piso = models.CharField(max_length=20, blank=True, null=True)
+    ultima_actualizacion = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'configuracion_plano'
+
+class ConfiguracionReportes(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, null=True)
+    query = models.TextField()
+    parametros = models.JSONField(blank=True, null=True)
+    programacion = models.JSONField(blank=True, null=True)
+    destinatarios = models.TextField(blank=True, null=True)
+    activo = models.IntegerField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'configuracion_reportes'
+
+class CortesCaja(models.Model):
+    caja = models.ForeignKey(Cajas, models.DO_NOTHING)
+    empleado = models.ForeignKey('Empleados', models.DO_NOTHING)
+    fecha_apertura = models.DateTimeField()
+    fecha_cierre = models.DateTimeField(blank=True, null=True)
+    monto_inicial = models.DecimalField(max_digits=10, decimal_places=2)
+    monto_final = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    diferencia = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    estatus = models.CharField(max_length=8, blank=True, null=True)
+    notas = models.TextField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'cortes_caja'
+
+class DireccionesCliente(models.Model):
+    cliente = models.ForeignKey(Clientes, models.DO_NOTHING, related_name='direcciones')
+    nombre_etiqueta = models.CharField(max_length=50, blank=True, null=True)
+    calle = models.CharField(max_length=100)
+    numero_exterior = models.CharField(max_length=20)
+    numero_interior = models.CharField(max_length=20, blank=True, null=True)
+    colonia = models.CharField(max_length=100)
+    ciudad = models.CharField(max_length=100, blank=True, null=True)
+    estado = models.CharField(max_length=100, blank=True, null=True)
+    codigo_postal = models.CharField(max_length=10, blank=True, null=True)
+    referencias = models.TextField(blank=True, null=True)
+    latitud = models.DecimalField(max_digits=10, decimal_places=8, blank=True, null=True)
+    longitud = models.DecimalField(max_digits=11, decimal_places=8, blank=True, null=True)
+    predeterminada = models.IntegerField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+    numero_piso = models.CharField(max_length=100, blank=True, null=True)
+    area = models.CharField(max_length=100, blank=True, null=True)
+    costo_entrega = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True)
+
+    @property
+    def direccion_completa(self):
+        """Devuelve una cadena con la dirección formateada."""
+        parte_calle = f"{self.calle} {self.numero_exterior}"
+        if self.numero_interior:
+            parte_calle += f", Int. {self.numero_interior}"
+        return f"{parte_calle}, {self.colonia}"
+
+    class Meta:
+        managed = True
+        db_table = 'direcciones_cliente'
+
+
+class ElementosMapa(models.Model):
+    area = models.ForeignKey(Areas, models.DO_NOTHING)
+    tipo = models.CharField(max_length=50)
+    subtipo = models.CharField(max_length=50, blank=True, null=True)
+    posicion_x = models.FloatField(blank=True, null=True)
+    posicion_y = models.FloatField(blank=True, null=True)
+    rotacion = models.FloatField(blank=True, null=True)
+    ancho = models.FloatField(blank=True, null=True)
+    alto = models.FloatField(blank=True, null=True)
+    propiedades = models.JSONField(blank=True, null=True)
+    escala = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'elementos_mapa'
+
+
+class Empleados(models.Model):
+    rol = models.ForeignKey('Roles', models.DO_NOTHING)
+    nombre = models.CharField(max_length=100)
+    apellidos = models.CharField(max_length=100)
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+    email = models.CharField(max_length=100, blank=True, null=True)
+    direccion = models.TextField(blank=True, null=True)
+    fecha_nacimiento = models.DateField(blank=True, null=True)
+    fecha_contratacion = models.DateField()
+    numero_django = models.IntegerField(blank=True, null=True)
+    pin_acceso = models.CharField(unique=True, max_length=255, blank=True, null=True)
+    estatus = models.CharField(max_length=10, blank=True, null=True)
+    foto_url = models.CharField(max_length=255, blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'empleados'
+
+
+class Empresa(models.Model):
+    sys_pk = models.IntegerField(blank=True, null=True)
+    nombre = models.CharField(max_length=50, blank=True, null=True)
+    telefono = models.CharField(max_length=50, blank=True, null=True)
+    rfc = models.CharField(db_column='RFC', max_length=50, blank=True, null=True)  # Field name made lowercase.
+    observaciones = models.CharField(max_length=50, blank=True, null=True)
+    direccion = models.CharField(max_length=100, blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'empresa'
+
+
+class Encuestas(models.Model):
+    orden = models.ForeignKey('Ordenes', models.DO_NOTHING)
+    calificacion_general = models.IntegerField(blank=True, null=True)
+    calificacion_comida = models.IntegerField(blank=True, null=True)
+    calificacion_servicio = models.IntegerField(blank=True, null=True)
+    calificacion_rapidez = models.IntegerField(blank=True, null=True)
+    calificacion_limpieza = models.IntegerField(blank=True, null=True)
+    comentarios = models.TextField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'encuestas'
+
+
+class InventarioMovimientos(models.Model):
+    producto = models.ForeignKey('Productos', models.DO_NOTHING)
+    tipo_movimiento = models.CharField(max_length=7)
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2)
+    descripcion = models.TextField(blank=True, null=True)
+    empleado_id = models.IntegerField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'inventario_movimientos'
+
+
+class LiquidacionesRepartidor(models.Model):
+    repartidor = models.ForeignKey('Repartidores', models.DO_NOTHING)
+    empleado_registro = models.ForeignKey(Empleados, models.DO_NOTHING)
+    corte_caja = models.ForeignKey(CortesCaja, models.DO_NOTHING)
+    fecha_liquidacion = models.DateTimeField()
+    total_ordenes = models.IntegerField()
+    monto_efectivo = models.DecimalField(max_digits=10, decimal_places=2)
+    monto_entregado = models.DecimalField(max_digits=10, decimal_places=2)
+    diferencia = models.DecimalField(max_digits=10, decimal_places=2)
+    notas = models.TextField(blank=True, null=True)
+    estatus = models.CharField(max_length=14)
+    creado_en = models.DateTimeField()
+    actualizado_en = models.DateTimeField()
+
+    class Meta:
+        managed = True
+        db_table = 'liquidaciones_repartidor'
+
+
+class LiquidacionesRepartidorDetalle(models.Model):
+    liquidacion = models.ForeignKey(LiquidacionesRepartidor, models.DO_NOTHING)
+    orden = models.ForeignKey('Ordenes', models.DO_NOTHING)
+    codigo_orden = models.CharField(max_length=20)
+    cliente = models.CharField(max_length=100)
+    direccion = models.TextField(blank=True, null=True)
+    total_orden = models.DecimalField(max_digits=10, decimal_places=2)
+    metodo_pago = models.CharField(max_length=50)
+    hora_entrega = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'liquidaciones_repartidor_detalle'
+
+
+class LogSincronizacion(models.Model):
+    dispositivo_id = models.CharField(max_length=100, blank=True, null=True)
+    tabla = models.CharField(max_length=100)
+    operacion = models.CharField(max_length=6)
+    registro_id = models.IntegerField()
+    datos = models.JSONField(blank=True, null=True)
+    resultado = models.CharField(max_length=7)
+    mensaje = models.TextField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'log_sincronizacion'
+
+
+class Mesas(models.Model):
+    area = models.ForeignKey(Areas, models.DO_NOTHING)
+    numero = models.CharField(max_length=10)
+    capacidad = models.IntegerField()
+    estatus = models.CharField(max_length=13, blank=True, null=True)
+    posicion_x = models.FloatField(blank=True, null=True)
+    posicion_y = models.FloatField(blank=True, null=True)
+    forma = models.CharField(max_length=11, blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+    escala = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'mesas'
+        # Agregar constraint única para área + número
+        constraints = [
+            models.UniqueConstraint(
+                fields=['area', 'numero'],
+                name='unique_mesa_area_numero',
+                violation_error_message='Ya existe una mesa con este número en la misma área'
+            )
+        ]
+    
+    def clean(self):
+        """Validación adicional a nivel de modelo"""
+        super().clean()
+        
+        # Verificar si ya existe una mesa con el mismo número en la misma área
+        if Mesas.objects.filter(
+            area=self.area, 
+            numero__iexact=self.numero
+        ).exclude(id=self.id).exists():
+            raise ValidationError(
+                f'Ya existe una mesa con el número "{self.numero}" en esta área'
+            )
+
+
+class MetodosPago(models.Model):
+    nombre = models.CharField(max_length=50)
+    descripcion = models.TextField(blank=True, null=True)
+    requiere_comprobacion = models.IntegerField(blank=True, null=True)
+    comision_porcentaje = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    activo = models.IntegerField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+    liquidacion = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'metodos_pago'
+
+
+class Modificadores(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, null=True)
+    precio_adicional = models.DecimalField(max_digits=10, decimal_places=2)
+    maximo_selecciones = models.IntegerField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'modificadores'
+
+
+class OpcionesModificador(models.Model):
+    modificador = models.ForeignKey(Modificadores, models.DO_NOTHING)
+    nombre = models.CharField(max_length=100)
+    precio_adicional = models.DecimalField(max_digits=10, decimal_places=2)
+    orden = models.IntegerField(blank=True, null=True)
+    disponible = models.IntegerField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'opciones_modificador'
+
+
+class OrdenDetalles(models.Model):
+    orden = models.ForeignKey('Ordenes', models.DO_NOTHING)
+    producto = models.ForeignKey('Productos', models.DO_NOTHING)
+    combo = models.ForeignKey(Combos, models.DO_NOTHING, blank=True, null=True)
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    descuento = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    iva = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    notas = models.TextField(blank=True, null=True)
+    preparado = models.IntegerField(blank=True, null=True)
+    entregado = models.IntegerField(blank=True, null=True)
+    cancelado = models.IntegerField(blank=True, null=True)
+    motivo_cancelacion = models.TextField(blank=True, null=True)
+    empleado_cancela = models.ForeignKey(Empleados, models.DO_NOTHING, blank=True, null=True)
+    tiempo_preparacion = models.IntegerField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'orden_detalles'
+
+
+class OrdenHistorialEstados(models.Model):
+    orden = models.ForeignKey('Ordenes', models.DO_NOTHING)
+    estado_anterior = models.CharField(max_length=60, blank=True, null=True)
+    estado_nuevo = models.CharField(max_length=60, blank=True, null=True)
+    empleado_id = models.IntegerField()
+    motivo = models.TextField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'orden_historial_estados'
+
+
+class OrdenProductoModificadores(models.Model):
+    orden_detalle = models.ForeignKey(OrdenDetalles, models.DO_NOTHING)
+    opcion_modificador = models.ForeignKey(OpcionesModificador, models.DO_NOTHING)
+    cantidad = models.IntegerField()
+    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    creado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'orden_producto_modificadores'
+
+
+class Ordenes(models.Model):
+    sucursal = models.ForeignKey('Sucursales', models.DO_NOTHING)
+    corte_caja = models.ForeignKey(CortesCaja, models.DO_NOTHING, blank=True, null=True)
+    tipo_servicio = models.ForeignKey('TiposServicio', models.DO_NOTHING)
+    mesa = models.ForeignKey(Mesas, models.DO_NOTHING, blank=True, null=True)
+    cliente = models.ForeignKey(Clientes, models.DO_NOTHING, blank=True, null=True)
+    empleado = models.ForeignKey(Empleados, models.DO_NOTHING)
+    repartidor = models.ForeignKey('Repartidores', models.DO_NOTHING, blank=True, null=True)
+    direccion_entrega = models.ForeignKey(DireccionesCliente, models.DO_NOTHING, blank=True, null=True)
+    codigo_orden = models.CharField(unique=True, max_length=20)
+    personas = models.IntegerField(blank=True, null=True)
+    estatus = models.CharField(max_length=10, blank=True, null=True)
+    notas = models.TextField(blank=True, null=True)
+    observaciones = models.TextField(blank=True, null=True)
+    fecha_apertura = models.DateTimeField()
+    fecha_promesa_entrega = models.DateTimeField(blank=True, null=True)
+    fecha_entrega = models.DateTimeField(blank=True, null=True)
+    fecha_cierre = models.DateTimeField(blank=True, null=True)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    impuestos = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    descuento = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    propina = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    costo_entrega = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    total = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+    programado = models.IntegerField(blank=True, null=True)
+    fecha_programado = models.DateTimeField(blank=True, null=True)
+    estatus_preparacion = models.CharField(max_length=20, blank=True, null=True)
+    cocinero_id = models.IntegerField(blank=True, null=True)
+    fecha_inicio_preparacion = models.DateTimeField(blank=True, null=True)
+    fecha_fin_preparacion = models.DateTimeField(blank=True, null=True)
+    jerarquia = models.IntegerField(blank=True, null=True)
+    grupo_ruteo = models.CharField(max_length=20, blank=True, null=True)
+    bloque_ruta = models.ForeignKey(BloquesRuta, models.DO_NOTHING, blank=True, null=True)
+    posicion_en_bloque = models.IntegerField(blank=True, null=True)
+    prioridad_manual = models.IntegerField(blank=True, null=True)
+    estatus_entrega = models.CharField(max_length=9, blank=True, null=True)
+    nombre_tk = models.CharField(max_length=50, blank=True, null=True)
+    cubiertos = models.IntegerField(blank=True, null=True)
+    es_reserva = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'ordenes'
+
+
+class Pagos(models.Model):
+    orden = models.ForeignKey(Ordenes, models.DO_NOTHING)
+    metodo_pago = models.ForeignKey(MetodosPago, models.DO_NOTHING)
+    empleado = models.ForeignKey(Empleados, models.DO_NOTHING)
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    referencia = models.CharField(max_length=100, blank=True, null=True)
+    estatus = models.CharField(max_length=10, blank=True, null=True)
+    comentarios = models.TextField(blank=True, null=True)
+    fecha_pago = models.DateTimeField()
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+    caja_id = models.IntegerField(blank=True, null=True)
+    corte_caja_id = models.IntegerField(blank=True, null=True)
+    fecha_cancelacion = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'pagos'
+
+
+class Parametros(models.Model):
+    imp_tk_cocina = models.IntegerField(blank=True, null=True)
+    permite_cobrar = models.IntegerField(blank=True, null=True)
+    sucursal = models.ForeignKey('Sucursales', models.DO_NOTHING, blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'parametros'
+
+
+class ProductoModificadores(models.Model):
+    producto = models.ForeignKey('Productos', models.DO_NOTHING)
+    modificador = models.ForeignKey(Modificadores, models.DO_NOTHING)
+    obligatorio = models.IntegerField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'producto_modificadores'
+
+
+class Productos(models.Model):
+    categoria = models.ForeignKey(CategoriasProductos, models.DO_NOTHING)
+    codigo = models.CharField(unique=True, max_length=20, blank=True, null=True, verbose_name= 'Nombre corto')
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, null=True)
+    precio_venta = models.DecimalField(max_digits=10, decimal_places=2)
+    costo = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    imagen_url = models.CharField(max_length=500, blank=True, null=True)
+    tiempo_preparacion = models.IntegerField(blank=True, null=True)
+    unidad_medida = models.ForeignKey('UnidadesMedida', models.DO_NOTHING, blank=True, null=True)
+    stock_minimo = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    stock_actual = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    control_inventario = models.IntegerField(blank=True, null=True)
+    visible_menu = models.IntegerField(blank=True, null=True)
+    permite_descuento = models.IntegerField(blank=True, null=True)
+    iva_incluido = models.IntegerField(blank=True, null=True)
+    porcentaje_iva = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    orden = models.IntegerField(blank=True, null=True)
+    estatus = models.CharField(max_length=8, blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+    stock_inicial = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    vista_cocina = models.IntegerField(blank=True, null=True)
+    dias_disponibles = models.CharField(max_length=20, blank=True, null=True)
+    stock_validado = models.DecimalField(max_digits=20, decimal_places=6, blank=True, null=True)
+    fecha_validado = models.DateTimeField(blank=True, null=True)
+    stock_seguridad = models.DecimalField(max_digits=20, decimal_places=6, blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'productos'
+
+
+class Repartidores(models.Model):
+    empleado = models.OneToOneField(Empleados, models.DO_NOTHING)
+    vehiculo = models.CharField(max_length=100, blank=True, null=True)
+    placas = models.CharField(max_length=20, blank=True, null=True)
+    licencia = models.CharField(max_length=50, blank=True, null=True)
+    zona_asignada = models.TextField(blank=True, null=True)  # This field type is a guess.
+    estatus = models.CharField(max_length=10, blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+    activo = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'repartidores'
+
+
+class ReservasMesas(models.Model):
+    mesa = models.ForeignKey(Mesas, models.DO_NOTHING)
+    cliente_id = models.IntegerField(blank=True, null=True)
+    fecha = models.DateField()
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+    numero_personas = models.IntegerField(blank=True, null=True)
+    estado = models.CharField(max_length=10, blank=True, null=True)
+    notas = models.TextField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'reservas_mesas'
+
+class Roles(models.Model):
+    nombre = models.CharField(max_length=50)
+    descripcion = models.TextField(blank=True, null=True)
+    permisos = models.JSONField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'roles'
+
+    def __str__(self):
+        return self.nombre   # 🔑 Ahora Django mostrará el nombre en vez de "Roles object"
+
+
+class Sucursales(models.Model):
+    nombre = models.CharField(max_length=100)
+    direccion = models.TextField()
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+    horario_apertura = models.TimeField(blank=True, null=True)
+    horario_cierre = models.TimeField(blank=True, null=True)
+    dias_operacion = models.CharField(max_length=50, blank=True, null=True)
+    zona_entrega = models.TextField(blank=True, null=True)  # This field type is a guess.
+    estatus = models.CharField(max_length=13, blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'sucursales'
+
+class Tickets(models.Model):
+    orden = models.ForeignKey(Ordenes, models.DO_NOTHING)
+    serie = models.CharField(max_length=10, blank=True, null=True)
+    folio = models.IntegerField(blank=True, null=True)
+    uuid = models.CharField(max_length=36, blank=True, null=True)
+    emisor_rfc = models.CharField(max_length=13, blank=True, null=True)
+    receptor_rfc = models.CharField(max_length=13, blank=True, null=True)
+    receptor_nombre = models.CharField(max_length=150, blank=True, null=True)
+    receptor_email = models.CharField(max_length=100, blank=True, null=True)
+    receptor_uso_cfdi = models.CharField(max_length=10, blank=True, null=True)
+    tipo_comprobante = models.CharField(max_length=7, blank=True, null=True)
+    estatus = models.CharField(max_length=9, blank=True, null=True)
+    pdf_url = models.CharField(max_length=255, blank=True, null=True)
+    xml_url = models.CharField(max_length=255, blank=True, null=True)
+    fecha_emision = models.DateTimeField()
+    fecha_cancelacion = models.DateTimeField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'tickets'
+
+class TiposServicio(models.Model):
+    nombre = models.CharField(max_length=50)
+    descripcion = models.TextField(blank=True, null=True)
+    costo_adicional = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    tiempo_estimado = models.IntegerField(blank=True, null=True)
+    activo = models.IntegerField(blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'tipos_servicio'
+
+class UnidadesMedida(models.Model):
+    nombre = models.CharField(max_length=50)
+    valor = models.DecimalField(max_digits=7, decimal_places=3, null=True)
+    abreviatura = models.CharField(max_length=10)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'unidades_medida'
+
+    def __str__(self):
+        return self.nombre   
+
+class Usuarios(models.Model):
+    empleado = models.ForeignKey(Empleados, models.DO_NOTHING)
+    nombre_usuario = models.CharField(unique=True, max_length=50)
+    password_hash = models.CharField(max_length=255)
+    ultimo_acceso = models.DateTimeField(blank=True, null=True)
+    intentos_fallidos = models.IntegerField(blank=True, null=True)
+    token_recuperacion = models.CharField(max_length=255, blank=True, null=True)
+    fecha_expiracion_token = models.DateTimeField(blank=True, null=True)
+    estatus = models.CharField(max_length=9, blank=True, null=True)
+    creado_en = models.DateTimeField(blank=True, null=True)
+    actualizado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'usuarios'
